@@ -2535,14 +2535,24 @@ var upload_helper_UploadHelper = /** @class */ (function () {
             // const shouldTerminate = true;
             var abort = function (shouldTerminate) {
                 return new Promise(function (res, rej) {
-                    fileRecord.tusUpload.abort(shouldTerminate, function (err) {
-                        if (err) {
+                    // If using tus-upload-client v1.x, `abort` takes two arguments and the second is a callback.
+                    // If using v2.x, it takes only one argument and returns a promise.
+                    if (fileRecord.tusUpload.abort.length === 2) {
+                        fileRecord.tusUpload.abort(shouldTerminate, function (err) {
+                            if (err) {
+                                _this.prepareUploadError(fileRecord, err);
+                                rej(err);
+                                return;
+                            }
+                            res();
+                        });
+                    }
+                    else {
+                        fileRecord.tusUpload.abort(shouldTerminate).then(res, function (err) {
                             _this.prepareUploadError(fileRecord, err);
                             rej(err);
-                            return;
-                        }
-                        res();
-                    });
+                        });
+                    }
                 });
             };
             abort(false).then(function () {
